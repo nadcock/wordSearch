@@ -1,8 +1,13 @@
 var blockHeight = 20;
-var blockWidth = 31;
+var blockWidth = 35;
 var searchBlock = new Array();
 var wordStarted = new Boolean;
+var firstLetter = new Boolean;
 var wordAttempt = '';
+var lastCoord = new Array();
+var originCoord = new Array();
+var widthAndHeight;
+var alreadyFoundLetter = new Array();
 var wordList = new Array("handkerchief", "scissors", "soap", "spine", "religion", "law", "wisdom", "chimp", "blonde", "granite", "plug", "pumpkin", "fleet", "oven", "tart", "parachute", "hour", "pasta", "board", "wheelbarrow");
 
 function initBlock(){
@@ -14,6 +19,7 @@ function initBlock(){
 		wordStarted = false;
 		var elm = document.getElementById('search-block');
 		elm.onselectstart = function(){ return false; }
+		firstLetter = false;
 	}
 }
 
@@ -309,33 +315,43 @@ function printWords(){
 
 function letterMouseDown() {
 	//clearSelection();
-	if (this.className == "letter"){
+	
+	if ((this.className == "letter") || (this.className == "found"))
+	{
+		var id = this.id;
+		originCoord = id.split(',');
+		if (this.className == 'found')
+		{
+			alreadyFoundLetter.push(this.id);
+		}
 		this.className = "selected";
-		wordAttempt = wordAttempt.concat(this.innerHTML);
-		console.log('Word Attempt ' + wordAttempt);
+		var elemBounds = this.getBoundingClientRect();
+		firstLetter = true;
 	}
-	wordStarted = true;
-	var id = this.id;
-	var widthAndHeight = id.split(',');
-	var w = parseInt(widthAndHeight[0]);
-	var h = parseInt(widthAndHeight[0]);
-	//console.log("Mouse Down wordStarted is set to " + wordStarted);
+	wordStarted = true;	
 }
 
 function letterMouseOver() {
 	//clearSelection();
-	if (wordStarted == true) {
+	var id = this.id;
+	var thisCoords = id.split(',');
+	if ((wordStarted == true) && (firstLetter == true))
+	{
+		selectHereToOrigin(thisCoords);		
+	} else if ((wordStarted == true) && (firstLetter != false)) {
+		originCoord = thisCoords;
 		this.className = "selected";
-		wordAttempt = wordAttempt.concat(this.innerHTML);
-		console.log('Word Attempt ' + wordAttempt);
-		//console.log("Mouse Over wordStarted is set to " + wordStarted);
-
+		firstLetter = true;
+		console.log("Set in MouseOver");
 	}
-
+	
+	//console.log('Array: ' + thisCoords[0] + ':' + thisCoords[1]);
+	//console.log("Mouse Over wordStarted is set to " + wordStarted);
 }
 
 function letterMouseUp() {
 	wordStarted = false;
+	firstLetter = false;
 	var selectedLetters = document.getElementsByClassName("selected");
 	var match = false;
 	l = selectedLetters.length;
@@ -357,7 +373,7 @@ function letterMouseUp() {
 			}
 			for (var x = 0; x < l; x++) 
 			{
-				console.log("word matches");
+				//console.log("word matches");
 				selectedLetters[0].className = "found";	
 			}
 			break;
@@ -373,17 +389,82 @@ function letterMouseUp() {
 			selectedLetters[0].className = "letter";	
 		}
 	}
+	for (var i = 0; i < alreadyFoundLetter.length; i++)
+	{
+		document.getElementById(alreadyFoundLetter[i]).className = 'found';
+	}
 	
 	
 }
 
-/*function clearSelection() {
-    if (window.getSelection) {
-        window.getSelection().removeAllRanges();
-    } else if (document.selection) {
-        document.selection.empty();
-    }
-}*/
+function selectHereToOrigin(thisCoords) {
+	wordAttempt = "";
+	var selectedLetters = document.getElementsByClassName("selected");
+	var l = selectedLetters.length; 
+	for (var i = 0; i < l; i++) 
+		{
+			selectedLetters[0].className = "letter";	
+		}
+	
+	if (thisCoords[0] == originCoord[0])
+	{
+		for (var i = 0; i <= Math.abs(originCoord[1] - thisCoords[1]); i++)
+		{
+			if (originCoord[1] - thisCoords[1] > 0) {
+				var newy = parseInt(originCoord[1]) - i;
+			} else {
+				var newy = parseInt(originCoord[1]) + i;
+			}	
+			var elem = document.getElementById(originCoord[0].toString() + "," + newy.toString());
+			if (elem.className == 'found') 
+			{
+				alreadyFoundLetter.push(elem.id);
+			}
+			elem.className = "selected";
+			wordAttempt = wordAttempt.concat(elem.innerHTML);
+		}
+	} else if (thisCoords[1] == originCoord[1]) {
+		for (var i = 0; i <= Math.abs(originCoord[0] - thisCoords[0]); i++)
+		{
+			if (originCoord[0] - thisCoords[0] > 0) {
+				var newy = parseInt(originCoord[0]) - i;
+			} else {
+				var newy = parseInt(originCoord[0]) + i;
+			}
+			var elem = document.getElementById(newy.toString() + "," + originCoord[1].toString());
+			elem.className = "selected";
+			wordAttempt = wordAttempt.concat(elem.innerHTML);
+		}
+	} else if (((thisCoords[1] - originCoord[1]) / (thisCoords[0] - originCoord[0])) == 1) {
+		for (var i = 0; i <= Math.abs(originCoord[0] - thisCoords[0]); i++)
+		{
+			if (parseInt(originCoord[0]) < parseInt(thisCoords[0])) {
+				var newx = parseInt(originCoord[0]) + i;
+				var newy = parseInt(originCoord[1]) + i;
+			} else {
+				var newx = parseInt(originCoord[0]) - i;
+				var newy = parseInt(originCoord[1]) - i;
+			}
+			var elem = document.getElementById(newx.toString() + "," + newy.toString());
+			elem.className = "selected";
+			wordAttempt = wordAttempt.concat(elem.innerHTML);
+		}
+	} else if (((thisCoords[1] - originCoord[1]) / (thisCoords[0] - originCoord[0])) == -1) {
+		for (var i = 0; i <= Math.abs(originCoord[0] - thisCoords[0]); i++)
+		{
+			if (parseInt(originCoord[0]) < parseInt(thisCoords[0])) {
+				var newx = parseInt(originCoord[0]) + i;
+				var newy = parseInt(originCoord[1]) - i;
+			} else {
+				var newx = parseInt(originCoord[0]) - i;
+				var newy = parseInt(originCoord[1]) + i;
+			}
+			var elem = document.getElementById(newx.toString() + "," + newy.toString());
+			elem.className = "selected";
+			wordAttempt = wordAttempt.concat(elem.innerHTML);
+		}
+	}
+}
 
 function parse(string){
 	var args = [].slice.call(arguments, 1), i=0;
