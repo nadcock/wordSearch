@@ -1,8 +1,8 @@
 var blockHeight = 20;
 var blockWidth = 35;
 var searchBlock = new Array();
-var wordStarted = new Boolean;
-var firstLetter = new Boolean;
+var wordStarted = new Boolean();
+var firstLetter = new Boolean();
 var wordAttempt = '';
 var lastCoord = new Array();
 var originCoord = new Array();
@@ -27,6 +27,10 @@ function fillBlockWithWords(){
 	for(var i=0; i < wordList.length; i++)
 	{
 		word = wordList[i];
+		word = word.replace(/\s+/g, '');
+		word = word.replace("-", '');
+		word = word.replace("'", '');
+		//console.log(word);
 		var placeable = placeWordInBlock(word);
 		if (!placeable)
 		{
@@ -54,6 +58,9 @@ function placeWordInBlock(word){
 			{
 				tryPosition = false;
 				writeDirectionAtPosition(wordArray, result[1]);
+				console.log(parse('%s was placed on board', word));
+				console.log(parse('at coords: ', result[1]));
+
 				return true;
 			} else
 			{
@@ -64,6 +71,7 @@ function placeWordInBlock(word){
 		triedPositions.push(newPosition);
 		if (triedPositions.length > (blockHeight * blockWidth))
 		{
+			console.log(parse('%s was not able to be placed on board.', word));
 			return false;
 		}
 	}
@@ -342,7 +350,7 @@ function letterMouseOver() {
 		originCoord = thisCoords;
 		this.className = "selected";
 		firstLetter = true;
-		console.log("Set in MouseOver");
+		//console.log("Set in MouseOver");
 	}
 	
 	//console.log('Array: ' + thisCoords[0] + ':' + thisCoords[1]);
@@ -358,8 +366,11 @@ function letterMouseUp() {
 	for (var i = 0; i < wordList.length; i++)
 	{
 		var word = wordList[i].toUpperCase();
-		var reverse = word.split("").reverse().join("");
-		if ((wordAttempt == word) || (wordAttempt == reverse))
+		var valid_word = word.replace(/\s+/g, '');
+		valid_word = valid_word.replace("-", '');
+		valid_word = valid_word.replace("'", '');
+		var reverse = valid_word.split("").reverse().join("");
+		if ((wordAttempt == valid_word) || (wordAttempt == reverse))
 		{
 			match = true
 			var words = document.getElementsByClassName("word");
@@ -466,15 +477,64 @@ function selectHereToOrigin(thisCoords) {
 	}
 }
 
+function getTopicFromForm(){
+	var form = document.forms['getTopic'];
+	var topic = form.topic.value;
+	topic = escape(topic);
+	return topic;
+}
+
+function makeXMLHttpRequest() {
+	var topic = getTopicFromForm();
+	$.getJSON('scrambler.py?topic=' + topic, function(data) {
+		wordList = [];
+		//console.log(wordList);
+		for (var i = 0; i < data.length; i++) {
+			wordList.push(data[i]);
+			//console.log(wordList);
+		}
+		if (wordList.length < 1) {
+			wordList = wordList = new Array("handkerchief", "scissors", "soap", "spine", "religion", "law", "wisdom", "chimp", "blonde", "granite", "plug", "pumpkin", "fleet", "oven", "tart", "parachute", "hour", "pasta", "board", "wheelbarrow");
+		}
+		initBlock();
+		fillBlockWithWords();
+		fillBlankWithLetters();
+		printBlock();
+		printWords();
+	});
+	
+}
+
+function resetSearchBlock() {
+	var elem = document.getElementById('search-block');
+	while (elem.hasChildNodes()) {
+    	elem.removeChild(elem.lastChild);
+    }
+    elem = document.getElementById('wordList');
+    while (elem.hasChildNodes()) {
+    	elem.removeChild(elem.lastChild);
+	}		
+}
+
+function buildBlockFromTopic() {
+	resetSearchBlock();
+	//console.log("triggered");
+	makeXMLHttpRequest();
+	
+}
+
+
+
+
+
 function parse(string){
 	var args = [].slice.call(arguments, 1), i=0;
 	return string.replace(/%s/g, function() {return args[i++];});
 }
 
-initBlock();
-fillBlockWithWords();
-fillBlankWithLetters();
-printBlock();
-printWords();
+var script = document.createElement('script');
+script.src = 'http://jqueryjs.googlecode.com/files/jquery-1.2.6.min.js';
+script.type = 'text/javascript';
+document.getElementsByTagName('head')[0].appendChild(script);
 
 
