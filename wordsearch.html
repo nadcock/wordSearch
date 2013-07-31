@@ -3,20 +3,24 @@
 <head> 
 	<title>Word Search Builder</title>
 	<link rel="stylesheet" type="text/css" href="wordsearch.css">
+	<script src="wordsearch.js"></script>
 </head>
 <body onmouseup="letterMouseUp()" onmousedown="letterMouseDown()">
 	<div id="title">
 		<h1> Welcome to Word Search Builder </h1>
+		<br>
+		<form name="getTopic" action="javascript:buildBlockFromTopic()">
+			Please enter a topic for the word search: 
+			<input type="text" name="topic">
+			<input type="submit" name="build" value="Build">
+		</form>
 	</div>
-	<!--<p id='info'> This site allows you to create a word search from a wikipedia URL-->
-	<!--<button type="button" onclick="createBlock()"> Generate </button> </p>-->
 	<hr>
 	<div id="search-block"></div>
 	<div><br></div>
 	<div id="wordList"></div>
 	<div><br><br></div>
-
-	<script src="wordsearch.js"></script>
+	
 </body>
 
 </html>
